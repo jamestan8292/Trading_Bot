@@ -13,7 +13,6 @@ def gain_loss(df, share_size):
     share_size = 100
     accumulated_shares = 0
     bought = False
-    initial_investment = 0
     
     # Loop through the Pandas DataFrame and initiate a trade at each iteration
     for index, row in df.iterrows():
@@ -23,9 +22,6 @@ def gain_loss(df, share_size):
             df.loc[index, "trade_type"] = "buy"
         
             bought = True  # indicate stock has been bought
-        
-            if initial_investment == 0:
-                initial_investment = row["Close"] * share_size
         
             # calculate the cost of the trade by multiplying the current day's price
             # by the share_size, or number of shares purchased
@@ -58,16 +54,15 @@ def gain_loss(df, share_size):
     
         accumulated_shares = 0
         
-    return df, initial_investment, accumulated_shares
+        
+    return df, accumulated_shares
 
 
-def calc_portfolio_value(df, share_size):
+
+
+def calc_portfolio_value(df, share_size, initial_capital):
     
-    # Set the initial capital
-    initial_capital = float(100000)
     
-    
-    # Take a 500 share position where the dual moving average crossover is 1 (SMA50 is greater than SMA100)
     df["Position"] = share_size * df["Signal"]
     
     # Find the points in time where a 500 share position is bought or sold
