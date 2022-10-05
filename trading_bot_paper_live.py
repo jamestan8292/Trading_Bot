@@ -37,6 +37,8 @@ logging.basicConfig(
 # Cancel any open orders
 api.cancel_all_orders()
 
+# Set # shares
+share_size = 10
 
 # Set flags
 next_trade = True
@@ -47,7 +49,7 @@ done_for_the_day = False
 # If it has been bought before, set share_size to position quantity
 position = api.get_position(ticker)
 position_qty = int(position.qty)
-if position_qty != 0:
+if position_qty == share_size:
     bought = True
     share_size = position_qty
 
@@ -102,7 +104,7 @@ while True:
 
     try:
 
-        while next_trade:
+        while True:
 
             wait_for_market_open()
 
@@ -137,23 +139,23 @@ while True:
                 next_trade = False
 
             # Check if order has been fully filled, exit loop only if order is fully filled (order_submitted = False)
-            while order_submitted:
-                sleep(1)
-                position = api.get_position(ticker)
-                if int(position.qty) == share_size:
-                    order_submitted = False
-                    sleep(300)  # wait 5 mins before next trade
+            # while order_submitted:
+            #     sleep(1)
+            #     position = api.get_position(ticker)
+            #     if int(position.qty) == share_size:
+            #         order_submitted = False
+            #         sleep(300)  # wait 5 mins before next trade
 
-            # If done_for_the_day flag is through, sleep until market opens
-            while done_for_the_day:
-                clock = api.get_clock()
-                next_market_open = clock.next_open - clock.timestamp
+            # If done_for_the_day flag is true, sleep until market opens
+            # while done_for_the_day:
+            #     clock = api.get_clock()
+            #     next_market_open = clock.next_open - clock.timestamp
 
-                # Cancel any open orders
-                api.cancel_all_orders()
+            #     # Cancel any open orders
+            #     api.cancel_all_orders()
 
-                sleep(next_market_open.total_seconds())
-                next_trade = True
+            #     sleep(next_market_open.total_seconds())
+            #     next_trade = True
 
     except Exception as e:
 	    logging.exception(e)
