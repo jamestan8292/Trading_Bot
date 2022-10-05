@@ -47,7 +47,7 @@ done_for_the_day = False
 # If it has been bought before, set share_size to position quantity
 position = api.get_position(ticker)
 position_qty = int(position.qty)
-if position.qty != 0:
+if position_qty != 0:
     bought = True
     share_size = position_qty
 
