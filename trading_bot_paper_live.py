@@ -78,9 +78,9 @@ def wait_for_market_open():
 		time_to_open = (clock.next_open - clock.timestamp).total_seconds()
 		sleep(round(time_to_open))
 
-# Send order. First check to see if there is 20 minuites left before market closes
+# Send order. First check to see if there is 10 minuites left before market closes
 def send_order(ticker, direction, share_size):
-    if time_to_market_close() > 120:
+    if time_to_market_close() > 10:
 
         api.submit_order(
             symbol=ticker, 
@@ -148,6 +148,10 @@ while True:
             while done_for_the_day:
                 clock = api.get_clock()
                 next_market_open = clock.next_open - clock.timestamp
+
+                # Cancel any open orders
+                api.cancel_all_orders()
+
                 sleep(next_market_open.total_seconds())
                 next_trade = True
 
