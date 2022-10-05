@@ -10,7 +10,6 @@ def gain_loss(df, share_size):
     df["cost/proceeds"] = np.nan
     
     # Initialize share size and accumulated shares
-    share_size = 100
     accumulated_shares = 0
     bought = False
     
@@ -133,7 +132,7 @@ def portfolio_metrics(df):
     # Start by calculating the downside return values
     
     # Create a DataFrame that contains the Portfolio Daily Returns column
-    sortino_ratio_df = df[['Portfolio Daily Returns']]
+    sortino_ratio_df = df[['Portfolio Daily Returns']].copy()
     
     # Create a column to hold downside return values
     sortino_ratio_df.loc[:,'Downside Returns'] = 0
