@@ -47,8 +47,12 @@ done_for_the_day = False
 
 # Check if stock has been bought before
 # If it has been bought before, set share_size to position quantity
-position = api.get_position(ticker)
-position_qty = int(position.qty)
+try:
+    position = api.get_position(ticker)
+    position_qty = int(position.qty)
+except:
+    position_qty = 0
+    
 if position_qty == share_size:
     bought = True
     share_size = position_qty
@@ -100,6 +104,7 @@ def send_order(ticker, direction, share_size):
     return order_sent, done_for_the_day
 
 # main loop
+
 while True:
 
     try:
