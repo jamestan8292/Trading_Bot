@@ -10,7 +10,6 @@ def gain_loss(df, share_size):
     df["cost/proceeds"] = np.nan
     
     # Initialize share size and accumulated shares
-    share_size = 100
     accumulated_shares = 0
     bought = False
     
@@ -65,7 +64,7 @@ def calc_portfolio_value(df, share_size, initial_capital):
     
     df["Position"] = share_size * df["Signal"]
     
-    # Find the points in time where a 500 share position is bought or sold
+    # Find the points in time where share position is bought or sold
     df["Entry/Exit Position"] = df["Position"].diff()
     
     # Multiply share price by entry/exit positions and get the cumulatively sum
@@ -93,7 +92,7 @@ def calc_portfolio_value(df, share_size, initial_capital):
     
     return df
 
-def portfolio_metrics(df):
+def portfolio_metrics(df, initial_capital):
     
     # Create the list of the metric names
     metrics = [
@@ -110,13 +109,13 @@ def portfolio_metrics(df):
     # Initialize the DataFrame with index set to evaluation metrics and columns 
     portfolio_evaluation_df = pd.DataFrame(index=metrics, columns=columns)
     
-    # Calculate the Annualized return metric
-    portfolio_evaluation_df.loc['Annualized Return'] = (
-        df['Portfolio Daily Returns'].mean() * 252
-    )
+    # Calculate the Annualized return metric: CAGR = ([(Ending Value / Beginning Value) ^ (1 / (# trading days/252))] - 1)
+    total_profit_loss = df["cost/proceeds"].sum()
+    portfolio_evaluation_df.loc['Annualized Return'] = ((initial_capital+total_profit_loss)/initial_capital)**(365/df.shape[0]) - 1
+
     
     # Calculate the Cumulative returns metric
-    portfolio_evaluation_df.loc['Cumulative Returns'] = df['Portfolio Cumulative Returns'][-1]
+    portfolio_evaluation_df.loc['Cumulative Returns'] = total_profit_loss / initial_capital
     
     # Calculate the Annual volatility metric
     portfolio_evaluation_df.loc['Annual Volatility'] = (
@@ -133,7 +132,7 @@ def portfolio_metrics(df):
     # Start by calculating the downside return values
     
     # Create a DataFrame that contains the Portfolio Daily Returns column
-    sortino_ratio_df = df[['Portfolio Daily Returns']]
+    sortino_ratio_df = df[['Portfolio Daily Returns']].copy()
     
     # Create a column to hold downside return values
     sortino_ratio_df.loc[:,'Downside Returns'] = 0
