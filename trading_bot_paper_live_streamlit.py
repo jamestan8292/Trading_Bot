@@ -57,6 +57,22 @@ date_format='%m/%d/%Y %H:%M:%S %Z'
 my_timezone=timezone('US/Pacific')
 
 
+#--------------------------------
+# Streamlit setup
+#--------------------------------
+
+# Title shown on Streamlit webpage
+st.title('Trading Bot')
+
+# current date/time streamlit placeholder
+dt_now = st.empty() 
+
+# time to open streamlit placeholder
+tto = st.empty()
+
+# current position streamlit placeholder
+cp = st.empty()    
+
 #----------
 # Functions
 #----------
@@ -84,8 +100,8 @@ def minutes_to_market_close():
 
 # Wait for market to open
 def wait_for_market_open():
-    dt_now = st.empty() # current date/time streamlit placeholder
-    tto = st.empty()    # time to open streamlit placeholder
+    global dt_now
+    global tto
     clock = api.get_clock()
     while not clock.is_open:
         clock = api.get_clock()
@@ -130,9 +146,6 @@ def get_position(ticker):
 # Initializations
 # ----------------
 
-# Title shown on Streamlit webpage
-st.title('Trading Bot')
-
 # Log error messsages
 logging.basicConfig(
 	filename='errlog.log',
@@ -151,7 +164,7 @@ done_for_the_day = False
 # Check if stock has been bought before
 # If it has been bought before, set share_size to position quantity
 position_qty, bought = get_position(ticker)
-st.text('Current Position of {} is {}'.format(ticker, position_qty))
+cp.markdown('Current Position of {} is:  {}'.format(ticker, position_qty))
 
 # Load 'trained' scaler
 filepath_scaler= ('./Resources/' + ticker + '_xgb_5mins_scaler.sav')
@@ -162,6 +175,7 @@ with open(filepath_scaler, 'rb') as f:
 filepath_model= ('./Resources/' + ticker + '_xgb_5mins_model.sav')
 with open(filepath_model, 'rb') as f: 
     model = joblib.load(f)
+
 
 
 # ----------------
@@ -183,14 +197,9 @@ while True:
         new_data_df = yf.download(ticker, period='1d', interval='5m')
         new_data_df.drop(columns=['Adj Close'], axis=1, inplace=True)
         df = new_data_df.take([-2])
-        print('df = ', df)
         new_data_scaled = X_scaler.transform(df)
         signal = model.predict(new_data_scaled)
         signal = signal[0]
-
-        # Set limit amount
-        # limit_amount = df['Close'].values[0]
-        # limit_amount
         
         # Buy if stock has not been already bought
         # Sell if stock has already been bought
@@ -199,21 +208,28 @@ while True:
         if signal==1 and bought==False:  
             order_submitted, done_for_the_day = send_order(ticker, 'buy', share_size)
             bought = True
-            next_trade = False   
             now = datetime_now()
-            st.markdown('Date/time now: ' + now.strftime(date_format))
-            st.markdown(now.strftime("%Y-%m-%d %H:%M:%S") + ' Bought')
+            st.markdown(now.strftime(date_format) + ' ... Bought')
+            position_qty, not_used = get_position(ticker)
+            while position_qty < share_size: # Wait for order to be fully filled
+                sleep(1)  # wait 1 second
+                position_qty, not_used = get_position(ticker)  # get position again
+            cp.markdown('Current Position of {} is:  {}'.format(ticker, position_qty))
 
         elif signal==0 and bought==True:
             order_submitted, done_for_the_day = send_order(ticker, 'sell', share_size)
             bought = False
-            next_trade = False
             now = datetime_now()
-            st.markdown('Date/time now: ' + now.strftime(date_format))
-            st.markdown(now.strftime(date_format) + ' Sold')
+            st.markdown(now.strftime(date_format) + ' ... Sold')
+            position_qty, not_used = get_position(ticker)
+            while position_qty > 0: # Wait for order to be fully sold
+                sleep(1)  # wait 1 second
+                position_qty, not_used = get_position(ticker)  # get position again
+            cp.markdown('Current Position of {} is:  {}'.format(ticker, position_qty))
+
         else:
             now = datetime_now()
-            st.markdown(now.strftime(date_format) + ' Hold')
+            st.markdown(now.strftime(date_format) + ' ... Hold')
 
     except Exception as e:
 	    logging.exception(e)
